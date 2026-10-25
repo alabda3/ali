@@ -166,6 +166,65 @@ loginButton.addEventListener("click", async () => {
     loginButton.disabled = false;
   }
   });
+ 
+const instagramButton = document.createElement("button");
+
+instagramButton.type = "button";
+instagramButton.textContent = "📸 فحص اتصال إنستغرام";
+instagramButton.style.cssText =
+  "background:#c13584;color:white;padding:12px;" +
+  "border:0;border-radius:8px;width:100%;" +
+  "margin-top:12px;cursor:pointer;";
+
+loginResult.insertAdjacentElement(
+  "afterend",
+  instagramButton
+);
+
+instagramButton.addEventListener("click", async () => {
+  if (!sessionToken) {
+    loginResult.textContent =
+      "⚠️ سجل دخولك أولاً";
+    return;
+  }
+
+  instagramButton.disabled = true;
+  loginResult.textContent = "جاري فحص إنستغرام...";
+
+  try {
+    const response = await fetch(
+      API_URL + "/instagram/check",
+      {
+        method: "POST",
+        headers: {
+          Authorization: "Bearer " + sessionToken
+        },
+        cache: "no-store"
+      }
+    );
+
+    const data = await response.json();
+
+    if (response.ok && data.connected === true) {
+      loginResult.textContent =
+        "✅ إنستغرام متصل: @" + data.username;
+    } else if (response.status === 401) {
+      sessionToken = null;
+      loginResult.textContent =
+        "⚠️ انتهت الجلسة. سجل دخولك مرة ثانية.";
+    } else {
+      loginResult.textContent =
+        "❌ فشل اتصال إنستغرام. رمز الحالة: " +
+        response.status;
+    }
+  } catch {
+    loginResult.textContent =
+      "⚠️ تعذر الاتصال بالسيرفر.";
+  } finally {
+    instagramButton.disabled = false;
+  }
+});
+
 </script>
 </body>
 </html>
