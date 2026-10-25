@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Social Hub | لوحة التحكم</title>
+<style>
+:root{font-family:system-ui,-apple-system,'Segoe UI',Tahoma,sans-serif;color:#e8eef9;background:#0c1220}*{box-sizing:border-box}body{margin:0;padding:22px 14px 70px}.wrap{max-width:700px;margin:auto}.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:28px}.brand{font-size:25px;font-weight:800}.tag{background:#203451;color:#a9cbff;border-radius:20px;padding:7px 12px;font-size:12px}.muted{color:#a2b0c8;font-size:14px;line-height:1.7}.card{background:#151f31;border:1px solid #2b3b53;border-radius:20px;padding:20px;margin:18px 0;box-shadow:0 10px 30px #0002}h1{font-size:24px;margin:0 0 6px}h2{font-size:19px;margin:0 0 14px}label{display:block;margin:14px 0 7px;font-weight:650}textarea{width:100%;min-height:115px;resize:vertical;background:#0e1727;border:1px solid #3a4b67;color:#fff;border-radius:13px;padding:13px;font:inherit}textarea:focus{outline:2px solid #3c86ff}input[type=file]{display:none}.upload{display:block;text-align:center;border:2px dashed #536c8d;border-radius:15px;padding:22px;cursor:pointer;background:#102037}.upload strong{display:block;margin-bottom:5px}.checks{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.checks label{margin:0;border:1px solid #364861;border-radius:12px;padding:12px;display:flex;align-items:center;gap:8px;font-size:14px}.checks input{accent-color:#3b82f6}.previews{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:14px}.previews img,.previews video{width:100%;height:160px;object-fit:cover;border-radius:12px;background:#020617}.preview-item{position:relative}.name{font-size:11px;overflow-wrap:anywhere;color:#b7c5dc}.btn{background:#2563eb;color:white;border:0;border-radius:13px;padding:15px 20px;width:100%;font:inherit;font-weight:800;cursor:pointer}.btn:active{transform:scale(.99)}.notice{background:#252437;border:1px solid #6d5f7d;padding:12px;border-radius:13px;color:#e6dff3;font-size:13px;line-height:1.8}.success{color:#9ef1bc}.summary{white-space:pre-wrap;overflow-wrap:anywhere;background:#0e1727;border-radius:12px;padding:14px;margin-top:14px;line-height:1.8}.hidden{display:none}small{color:#a2b0c8}
+</style>
+</head>
+<body><main class="wrap">
+<header class="top"><div class="brand">🌐 Social Hub</div><div class="tag">نسخة تجريبية</div></header>
+<h1>إنشاء منشور جديد</h1><p class="muted">اكتب الوصف، اختار صورة أو فيديو من الموبايل، وحدد المنصات. هاي المرحلة للتجربة والمعاينة فقط.</p>
+<section class="card">
+<h2>📝 محتوى المنشور</h2>
+<label for="caption">الوصف أو النص</label><textarea id="caption" placeholder="اكتب نص المنشور هنا..."></textarea>
+<label for="media">📷 الصور أو الفيديو</label>
+<label class="upload" for="media"><strong>اضغط هنا لاختيار صور أو فيديو</strong><span class="muted">تگدر تختار عدة صور، أو مقطع فيديو</span></label>
+<input id="media" type="file" accept="image/*,video/*" multiple>
+<div id="previews" class="previews" aria-live="polite"></div>
+<label>اختار المنصات</label>
+<div class="checks">
+<label><input type="checkbox" value="Instagram"> إنستغرام</label>
+<label><input type="checkbox" value="Facebook"> فيسبوك</label>
+<label><input type="checkbox" value="TikTok"> تيك توك</label>
+<label><input type="checkbox" value="WhatsApp"> واتساب</label>
+</div>
+<p class="muted">اختيار المنصات هنا ما يربط حساباتك ولا ينشر عليها بعد.</p>
+<button class="btn" id="prepare">👁️ معاينة المنشور</button>
+<div id="result" class="summary hidden" role="status"></div>
+</section>
+<p class="notice">🔒 الموقع حالياً واجهة تجريبية فقط. الصور والفيديو تبقى بجهازك خلال المعاينة، وما تنرفع لأي سيرفر. النشر الحقيقي على المنصات يحتاج ربط رسمي وصلاحيات، وبعض الحسابات الشخصية ما تدعم النشر التلقائي.</p>
+</main>
+<script>
+const input=document.getElementById('media'), previews=document.getElementById('previews'), result=document.getElementById('result');
+let urls=[];
+input.addEventListener('change',()=>{
+ urls.forEach(u=>URL.revokeObjectURL(u)); urls=[]; previews.replaceChildren();
+ const files=Array.from(input.files||[]);
+ for(const file of files){
+  const url=URL.createObjectURL(file);urls.push(url);
+  const item=document.createElement('div');item.className='preview-item';
+  const media=document.createElement(file.type.startsWith('video/')?'video':'img');media.src=url;
+  if(media.tagName==='VIDEO'){media.controls=true;media.preload='metadata';}
+  media.alt='معاينة الملف';item.appendChild(media);
+  const name=document.createElement('div');name.className='name';name.textContent=file.name;item.appendChild(name);previews.appendChild(item);
+ }
+});
+document.getElementById('prepare').addEventListener('click',()=>{
+ const caption=document.getElementById('caption').value.trim();
+ const platforms=[...document.querySelectorAll('.checks input:checked')].map(x=>x.value);
+ const files=[...(input.files||[])];
+ if(!caption&&!files.length){alert('اكتب نص أو اختار صورة أو فيديو أولاً');return;}
+ if(!platforms.length){alert('اختار منصة واحدة على الأقل');return;}
+ result.classList.remove('hidden');
+ result.textContent='✅ المنشور جاهز للمعاينة\n\nالوصف: '+(caption||'بدون نص')+'\n\nالمنصات المختارة: '+platforms.join('، ')+'\nالملفات: '+(files.length?files.map(f=>f.name).join('، '):'لا توجد')+'\n\n⚠️ لم يتم النشر على أي منصة.';
+ result.scrollIntoView({behavior:'smooth',block:'nearest'});
+});
+</script></body></html>
