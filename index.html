@@ -56,4 +56,75 @@ document.getElementById('prepare').addEventListener('click',()=>{
  result.textContent='✅ المنشور جاهز للمعاينة\n\nالوصف: '+(caption||'بدون نص')+'\n\nالمنصات المختارة: '+platforms.join('، ')+'\nالملفات: '+(files.length?files.map(f=>f.name).join('، '):'لا توجد')+'\n\n⚠️ لم يتم النشر على أي منصة.';
  result.scrollIntoView({behavior:'smooth',block:'nearest'});
 });
-</script></body></html>
+</script>
+<section dir="rtl" style="background:#172238;color:white;padding:20px;border-radius:15px;margin:20px 0;">
+  <h2>🔐 تسجيل دخول Social Hub</h2>
+  <p>اختبار الاتصال بالسيرفر</p>
+
+  <input
+    type="password"
+    id="adminPassword"
+    placeholder="أدخل كلمة مرور الموقع"
+    autocomplete="off"
+    style="padding:12px;width:100%;box-sizing:border-box;border-radius:8px;margin-bottom:12px;"
+  >
+
+  <button
+    type="button"
+    id="loginButton"
+    style="background:#2563eb;color:white;padding:12px;border:0;border-radius:8px;width:100%;"
+  >
+    اختبار تسجيل الدخول
+  </button>
+
+  <p id="loginResult" role="status"></p>
+</section>
+
+<script>
+document.getElementById("loginButton").addEventListener("click", async () => {
+  const input = document.getElementById("adminPassword");
+  const result = document.getElementById("loginResult");
+  const button = document.getElementById("loginButton");
+  const password = input.value;
+
+  input.value = "";
+
+  if (!password) {
+    result.textContent = "أدخل كلمة المرور أولاً";
+    return;
+  }
+
+  button.disabled = true;
+  result.textContent = "جاري التحقق...";
+
+  try {
+    const response = await fetch(
+      "https://social-hub-api.airaqi711.workers.dev/auth/check",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ password }),
+        cache: "no-store"
+      }
+    );
+
+    const data = await response.json();
+
+    if (response.ok && data.success === true) {
+      result.textContent = "✅ كلمة المرور صحيحة والاتصال ناجح";
+    } else if (response.status === 429) {
+      result.textContent = "⚠️ محاولات كثيرة، حاول بعد 15 دقيقة";
+    } else {
+      result.textContent = "❌ فشل التحقق من كلمة المرور";
+    }
+  } catch {
+    result.textContent = "⚠️ تعذر الاتصال بالسيرفر";
+  } finally {
+    button.disabled = false;
+  }
+});
+</script>
+</body>
+</html>
