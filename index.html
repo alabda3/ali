@@ -270,8 +270,13 @@ prepareButton.addEventListener("click", async () => {
     const data = await response.json();
 
     if (response.ok && data.prepared === true) {
-      loginResult.textContent =
-        "✅ تم إنشاء حاوية الصورة. لم يتم النشر.";
+
+loginResult.textContent =
+  "✅ تم تجهيز الصورة، ولم يتم النشر." +
+  "\nرقم الحاوية: " + data.containerId;
+
+loginResult.style.whiteSpace = "pre-line";
+
 
     } else if (response.status === 401) {
       sessionToken = null;
