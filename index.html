@@ -372,6 +372,40 @@ statusButton.addEventListener("click", async () => {
     statusButton.disabled = false;
   }
 });
+// Paste BEFORE the final </script> in GitHub index.html, after the existing buttons.
+// Uses existing globals: API_URL, sessionToken, loginResult, statusButton.
+const publishButton = document.createElement('button');
+publishButton.type = 'button';
+publishButton.textContent = '🚀 نشر الصورة على إنستغرام';
+publishButton.style.cssText = 'background:#16a34a;color:white;padding:14px;border:0;border-radius:8px;width:100%;margin-top:12px;cursor:pointer';
+statusButton.insertAdjacentElement('afterend', publishButton);
+publishButton.addEventListener('click', async () => {
+  if (!sessionToken) { loginResult.textContent = '⚠️ سجّل دخولك أولاً'; return; }
+  publishButton.disabled = true;
+  try {
+    const baseHeaders = {Authorization:'Bearer '+sessionToken};
+    const latestRes = await fetch(API_URL+'/instagram/latest', {method:'POST',headers:baseHeaders,cache:'no-store'});
+    const latest = await latestRes.json();
+    if (!latestRes.ok || !latest.found) throw new Error('ماكو صورة مجهزة في قاعدة البيانات');
+    if (latest.status === 'PUBLISHED') throw new Error('الصورة منشورة أصلاً');
+    if (latest.status !== 'READY') throw new Error('اضغط «فحص جاهزية الصورة» أولاً؛ حالة الصورة: '+latest.status);
+    const message = 'راح تنشر الصورة التالية فعلياً على حساب @al.abd3:\n'+latest.image_url+'\nالوصف: '+latest.caption+'\n\nهل توافق على النشر الآن؟';
+    if (!confirm(message)) return;
+    loginResult.textContent = 'جاري تنفيذ أمر النشر، لا تضغط مرة ثانية...';
+    const response = await fetch(API_URL+'/instagram/publish', {
+      method:'POST',headers:{...baseHeaders,'Content-Type':'application/json'},
+      body:JSON.stringify({containerId:latest.container_id,confirm:'PUBLISH'}),cache:'no-store'
+    });
+    const result = await response.json();
+    if (response.ok && result.published) {
+      loginResult.textContent = '✅ تم النشر فعلياً على إنستغرام. رقم المنشور: '+result.mediaId;
+    } else {
+      loginResult.textContent = '⚠️ لم يتم تأكيد النشر. '+(result.error || ('رمز HTTP: '+response.status))+' — تحقق من إنستغرام قبل إعادة المحاولة.';
+    }
+  } catch (error) {
+    loginResult.textContent = '⚠️ '+(error.message || 'تعذر الاتصال')+' — لا تعيد النشر قبل التأكد من الحساب.';
+  } finally { publishButton.disabled = false; }
+});
 
 </script>
 </body>
