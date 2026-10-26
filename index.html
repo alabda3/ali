@@ -225,6 +225,75 @@ instagramButton.addEventListener("click", async () => {
   }
 });
 
+const prepareButton = document.createElement("button");
+
+prepareButton.type = "button";
+prepareButton.textContent = "📷 تجهيز الصورة للنشر";
+prepareButton.style.cssText =
+  "background:#16a34a;color:white;padding:12px;" +
+  "border:0;border-radius:8px;width:100%;" +
+  "margin-top:12px;cursor:pointer;";
+
+instagramButton.insertAdjacentElement(
+  "afterend",
+  prepareButton
+);
+
+prepareButton.addEventListener("click", async () => {
+  if (!sessionToken) {
+    loginResult.textContent = "⚠️ سجل دخولك أولاً";
+    return;
+  }
+
+  const confirmed = confirm(
+    "هل تريد تجهيز photo.jpg على إنستغرام؟\n" +
+    "لن يتم نشر الصورة على حسابك الآن."
+  );
+
+  if (!confirmed) return;
+
+  prepareButton.disabled = true;
+  loginResult.textContent = "جاري تجهيز الصورة...";
+
+  try {
+    const response = await fetch(
+      API_URL + "/instagram/prepare",
+      {
+        method: "POST",
+        headers: {
+          Authorization: "Bearer " + sessionToken
+        },
+        cache: "no-store"
+      }
+    );
+
+    const data = await response.json();
+
+    if (response.ok && data.prepared === true) {
+      loginResult.textContent =
+        "✅ تم إنشاء حاوية الصورة. لم يتم النشر.";
+
+    } else if (response.status === 401) {
+      sessionToken = null;
+      loginResult.textContent =
+        "⚠️ انتهت الجلسة. سجل دخولك من جديد.";
+
+    } else {
+      loginResult.textContent =
+        "❌ فشل تجهيز الصورة. رمز الحالة: " +
+        response.status +
+        (data.instagramStatus
+          ? " / Instagram: " + data.instagramStatus
+          : "");
+    }
+  } catch {
+    loginResult.textContent =
+      "⚠️ تعذر الاتصال بالسيرفر.";
+  } finally {
+    prepareButton.disabled = false;
+  }
+});
+
 </script>
 </body>
 </html>
