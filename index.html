@@ -304,6 +304,75 @@ loginResult.style.whiteSpace = "pre-line";
   }
 });
 
+const statusButton = document.createElement("button");
+
+statusButton.type = "button";
+statusButton.textContent = "🔍 فحص جاهزية الصورة";
+statusButton.style.cssText =
+  "background:#7c3aed;color:white;padding:12px;" +
+  "border:0;border-radius:8px;width:100%;" +
+  "margin-top:12px;cursor:pointer;";
+
+prepareButton.insertAdjacentElement(
+  "afterend",
+  statusButton
+);
+
+statusButton.addEventListener("click", async () => {
+  if (!sessionToken) {
+    loginResult.textContent = "⚠️ سجل دخولك أولاً";
+    return;
+  }
+
+  statusButton.disabled = true;
+  loginResult.textContent = "جاري فحص جاهزية الصورة...";
+
+  try {
+    const response = await fetch(
+      API_URL + "/instagram/status",
+      {
+        method: "POST",
+        headers: {
+          Authorization: "Bearer " + sessionToken
+        },
+        cache: "no-store"
+      }
+    );
+
+    const data = await response.json();
+
+    if (response.status === 401) {
+      sessionToken = null;
+      loginResult.textContent =
+        "⚠️ انتهت الجلسة، سجل دخولك مجدداً.";
+    } else if (!response.ok) {
+      loginResult.textContent =
+        "❌ فشل فحص الصورة. رمز الحالة: " +
+        response.status +
+        (data.instagramStatus
+          ? " / Instagram: " + data.instagramStatus
+          : "");
+    } else if (data.status === "FINISHED") {
+      loginResult.textContent =
+        "✅ الصورة جاهزة للنشر، ولم يتم نشرها.";
+    } else if (data.status === "IN_PROGRESS") {
+      loginResult.textContent =
+        "⏳ إنستغرام ما زال يعالج الصورة.";
+    } else if (data.status === "EXPIRED") {
+      loginResult.textContent =
+        "⚠️ انتهت صلاحية الحاوية، نحتاج تجهيز صورة جديدة.";
+    } else {
+      loginResult.textContent =
+        "حالة الصورة: " + data.status;
+    }
+  } catch {
+    loginResult.textContent =
+      "⚠️ تعذر الاتصال بالسيرفر.";
+  } finally {
+    statusButton.disabled = false;
+  }
+});
+
 </script>
 </body>
 </html>
