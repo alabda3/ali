@@ -278,14 +278,19 @@ prepareButton.addEventListener("click", async () => {
       loginResult.textContent =
         "⚠️ انتهت الجلسة. سجل دخولك من جديد.";
 
-    } else {
-      loginResult.textContent =
-        "❌ فشل تجهيز الصورة. رمز الحالة: " +
-        response.status +
-        (data.instagramStatus
-          ? " / Instagram: " + data.instagramStatus
-          : "");
-    }
+  
+} else {
+  loginResult.textContent =
+    "❌ فشل تجهيز الصورة" +
+    "\nCloudflare: " + response.status +
+    "\nInstagram: " + (data.instagramStatus ?? "-") +
+    "\nError Code: " + (data.instagramErrorCode ?? "-") +
+    "\nSubcode: " + (data.instagramErrorSubcode ?? "-") +
+    "\nType: " + (data.instagramErrorType ?? "-");
+
+  loginResult.style.whiteSpace = "pre-line";
+}
+
   } catch {
     loginResult.textContent =
       "⚠️ تعذر الاتصال بالسيرفر.";
