@@ -406,6 +406,60 @@ publishButton.addEventListener('click', async () => {
   } finally { publishButton.disabled = false; }
 });
 
+const mediaPanel = document.createElement('section');
+mediaPanel.dir = 'rtl';
+mediaPanel.style.cssText = 'margin:16px 0;padding:16px;border-radius:12px;background:#172238;color:white';
+mediaPanel.innerHTML = `
+  <h3>📤 نشر صورة جديدة من جهازك</h3>
+  <input id="shFile" type="file" accept="image/jpeg" style="width:100%;margin:10px 0" />
+  <textarea id="shCaption" placeholder="وصف المنشور..." maxlength="2200" style="width:100%;box-sizing:border-box;min-height:90px;padding:10px;border-radius:8px"></textarea>
+  <button id="shUpload" type="button" style="background:#0891b2;color:#fff;border:0;padding:12px;width:100%;border-radius:8px;margin-top:10px;cursor:pointer">رفع الصورة وتجهيزها للنشر</button>
+  <p id="shMessage" role="status" style="white-space:pre-line;overflow-wrap:anywhere"></p>`;
+publishButton.insertAdjacentElement('afterend',mediaPanel);
+const shFile = mediaPanel.querySelector('#shFile');
+const shCaption = mediaPanel.querySelector('#shCaption');
+const shUpload = mediaPanel.querySelector('#shUpload');
+const shMessage = mediaPanel.querySelector('#shMessage');
+shUpload.addEventListener('click',async()=>{
+  if (!sessionToken) {shMessage.textContent='سجّل دخولك أولاً';return;}
+  const file=shFile.files[0];
+ 
+if (!file || file.type !== "image/jpeg" || file.size > 10 * 1024 * 1024) {
+
+    shMessage.textContent = "⚠️ اختار صورة JPG بحجم لا يزيد عن 10MB";
+  }
+  if (!confirm('رفع الصورة إلى ImageKit وتجهيزها على إنستغرام؟ لن يتم نشرها بعد.')) return;
+  shUpload.disabled=true;
+  try {
+    shMessage.textContent='جاري طلب صلاحية الرفع...';
+    const headers={Authorization:'Bearer '+sessionToken};
+    const ar=await fetch(API_URL+'/imagekit/auth',{method:'POST',headers,cache:'no-store'});
+    const auth=await ar.json();
+    if (!ar.ok) throw Error(auth.error||'فشل تصريح الرفع '+ar.status);
+    const form=new FormData();
+    form.append('file',file);
+    form.append('fileName',Date.now()+'-'+file.name.replace(/[^A-Za-z0-9._-]/g,'_'));
+    form.append('publicKey',auth.publicKey);
+    form.append('token',auth.token);
+    form.append('expire',String(auth.expire));
+    form.append('signature',auth.signature);
+    form.append('folder','/social-hub');
+    shMessage.textContent='جاري رفع الصورة إلى ImageKit...';
+    const ur=await fetch('https://upload.imagekit.io/api/v1/files/upload',{method:'POST',body:form});
+    const uploaded=await ur.json();
+    if (!ur.ok || !uploaded.url) throw Error(uploaded.message||'فشل الرفع '+ur.status);
+    shMessage.textContent='تم الرفع، جاري تجهيز الصورة على إنستغرام...';
+    const pr=await fetch(API_URL+'/instagram/prepare',{
+      method:'POST',headers:{...headers,'Content-Type':'application/json'},
+      body:JSON.stringify({imageUrl:uploaded.url,caption:shCaption.value.trim()}),cache:'no-store'
+    });
+    const prepared=await pr.json();
+    if (!pr.ok || !prepared.prepared) throw Error(prepared.error||'تعذر تجهيز الصورة: '+(prepared.instagramErrorCode||pr.status));
+    shMessage.textContent='✅ انرفعت الصورة وانجهزت حاويتها. اضغط زر «فحص جاهزية الصورة»، وبعدها زر النشر الأخضر مع التأكيد.\nرقم الحاوية: '+prepared.containerId;
+  } catch(e) {shMessage.textContent='❌ '+(e.message||'فشل غير معروف')+'\nإذا فشل التجهيز بعد الرفع، لا تكرر مباشرة؛ راجع الصورة والطلب أولاً.';}
+  finally {shUpload.disabled=false;}
+});
+
 </script>
 </body>
 </html>
