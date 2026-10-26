@@ -372,9 +372,8 @@ statusButton.addEventListener("click", async () => {
     statusButton.disabled = false;
   }
 });
-// Paste BEFORE the final </script> in GitHub index.html, after the existing buttons.
-// Uses existing globals: API_URL, sessionToken, loginResult, statusButton.
 const publishButton = document.createElement('button');
+
 publishButton.type = 'button';
 publishButton.textContent = '🚀 نشر الصورة على إنستغرام';
 publishButton.style.cssText = 'background:#16a34a;color:white;padding:14px;border:0;border-radius:8px;width:100%;margin-top:12px;cursor:pointer';
